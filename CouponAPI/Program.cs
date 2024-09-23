@@ -68,6 +68,21 @@ app.MapGet("/api/coupons/{id:int}", (int id) =>
 	return coupon == null ? Results.NotFound("No coupon found with the provided id " + id) : Results.Ok(coupon);
 }).WithName("GetCoupon");
 
+// Update coupon by id
+
+// Delete coupon by id
+app.MapDelete("/api/coupons/{id:int}", (int id) =>
+{
+	var coupon = CouponStore.CouponList.FirstOrDefault(u => u.Id == id);
+
+	if (coupon == null) return Results.BadRequest("No coupon found with the provided Id");
+	
+	CouponStore.CouponList.Remove(coupon);
+
+	return Results.Ok("Coupon deleted.");
+
+});
+
 #endregion
 
 app.UseHttpsRedirection();

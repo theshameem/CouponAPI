@@ -1,6 +1,7 @@
 using CouponAPI.Data;
 using CouponAPI.DTO.RequestModel;
 using CouponAPI.Models;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -69,6 +70,29 @@ app.MapGet("/api/coupons/{id:int}", (int id) =>
 }).WithName("GetCoupon");
 
 // Update coupon by id
+app.MapPut("/api/coupons", (CouponUpdateDto request) =>
+{
+	var index = CouponStore.CouponList.FindIndex(u => u.Id == request.Id);
+
+	Console.WriteLine("Index: {0}", index);
+
+	if (index == -1)
+	{
+		return Results.BadRequest("No coupon found with the provided id");
+	}
+
+	var coupon = new Coupon
+	{
+		Name = request.Name,
+		IsActive = request.IsActive,
+		Percent = request.Percent,
+		LastUpdated = DateTime.Now
+	};
+
+	CouponStore.CouponList[index] = coupon;
+
+	return Results.Ok("Coupon updated successfully");
+}).Produces<BadRequest>(400).Produces<Ok>();
 
 // Delete coupon by id
 app.MapDelete("/api/coupons/{id:int}", (int id) =>

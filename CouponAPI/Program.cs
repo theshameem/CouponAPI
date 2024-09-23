@@ -42,9 +42,11 @@ app.MapPost("/api/coupons", ([FromBody] Coupon coupon) =>
 }).WithName("CreateCoupon").Produces<Coupon>(201).Produces(400);
 
 // GET the list of coupons
-app.MapGet("/api/coupons", () =>
+app.MapGet("/api/coupons", (ILogger<Program> logger) =>
 {
 	var result = CouponStore.CouponList;
+
+	logger.LogInformation("List of coupons are ready for the client");
 
 	return Results.Ok(result);
 }).WithName("GetCoupons");

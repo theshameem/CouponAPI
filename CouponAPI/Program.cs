@@ -1,4 +1,5 @@
 using CouponAPI.Data;
+using CouponAPI.DTO.RequestModel;
 using CouponAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -21,25 +22,33 @@ if (app.Environment.IsDevelopment())
 #region Coupon APIs
 
 // CREATE a coupon
-app.MapPost("/api/coupons", ([FromBody] Coupon coupon) =>
+app.MapPost("/api/coupons", ([FromBody] CouponCreateDto request) =>
 {
-	if (coupon.Id != 0 || string.IsNullOrEmpty(coupon.Name))
+	if (string.IsNullOrEmpty(request.Name))
 	{
 		Results.BadRequest("Invalid Id or Coupon Name");
 	}
 
 	if (CouponStore.CouponList.FirstOrDefault(u =>
-		    string.Equals(u.Name, coupon.Name, StringComparison.CurrentCultureIgnoreCase)) != null)
+		    string.Equals(u.Name, request.Name, StringComparison.CurrentCultureIgnoreCase)) != null)
 	{
 		return Results.BadRequest("Coupon name already exists");
 	}
 
-	coupon.Id = CouponStore.CouponList.Max(u => u.Id) + 1;
+	var coupon = new Coupon
+	{
+		Id = CouponStore.CouponList.Max(u => u.Id) + 1,
+		Name = request.Name,
+		Percent = request.Percent,
+		IsActive = request.IsActive,
+		CreatedOn = DateTime.Now,
+		LastUpdated = DateTime.Now
+	};
 
 	CouponStore.CouponList.Add(coupon);
 
 	return Results.Created($"/api/coupon/{coupon.Id}", coupon);
-}).WithName("CreateCoupon").Produces<Coupon>(201).Produces(400);
+}).WithName("CreateCoupon").Accepts<CouponCreateDto>("application/json").Produces<Coupon>(201).Produces(400);
 
 // GET the list of coupons
 app.MapGet("/api/coupons", (ILogger<Program> logger) =>

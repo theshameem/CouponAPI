@@ -59,7 +59,7 @@ app.MapGet("/api/coupons", (ILogger<Program> logger) =>
 	logger.LogInformation("List of coupons are ready for the client");
 
 	return Results.Ok(result);
-}).WithName("GetCoupons");
+}).WithName("GetCoupons").Produces(200);
 
 // GET coupon by ID
 app.MapGet("/api/coupons/{id:int}", (int id) =>
@@ -67,7 +67,7 @@ app.MapGet("/api/coupons/{id:int}", (int id) =>
 	var coupon = CouponStore.CouponList.FirstOrDefault(u => u.Id == id);
 
 	return coupon == null ? Results.NotFound("No coupon found with the provided id " + id) : Results.Ok(coupon);
-}).WithName("GetCoupon");
+});
 
 // Update coupon by id
 app.MapPut("/api/coupons", (CouponUpdateDto request) =>

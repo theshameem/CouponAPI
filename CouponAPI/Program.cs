@@ -69,7 +69,7 @@ app.MapGet("/api/coupons", async (ILogger<Program> logger, ApplicationDbContext 
 }).WithName("GetCoupons").Produces(200);
 
 // GET coupon by ID
-app.MapGet("/api/coupons/{id:int}", (Guid id) =>
+app.MapGet("/api/coupons/{id:Guid}", (Guid id) =>
 {
 	var coupon = CouponStore.CouponList.FirstOrDefault(u => u.Id == id);
 

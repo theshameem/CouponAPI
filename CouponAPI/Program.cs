@@ -3,6 +3,7 @@ using CouponAPI.DTO.RequestModel;
 using CouponAPI.Models;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,10 @@ var builder = WebApplication.CreateBuilder(args);
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+	options.UseSqlServer(builder.Configuration.GetConnectionString("CouponAPIConnectionString"))
+);
 
 var app = builder.Build();
 
@@ -23,7 +28,7 @@ if (app.Environment.IsDevelopment())
 #region Coupon APIs
 
 // CREATE a coupon
-app.MapPost("/api/coupons", ([FromBody] CouponCreateDto request) =>
+app.MapPost("/api/coupons", async ([FromBody] CouponCreateDto request, ApplicationDbContext context) =>
 {
 	if (string.IsNullOrEmpty(request.Name))
 	{
@@ -38,7 +43,6 @@ app.MapPost("/api/coupons", ([FromBody] CouponCreateDto request) =>
 
 	var coupon = new Coupon
 	{
-		Id = CouponStore.CouponList.Max(u => u.Id) + 1,
 		Name = request.Name,
 		Percent = request.Percent,
 		IsActive = request.IsActive,
@@ -46,15 +50,18 @@ app.MapPost("/api/coupons", ([FromBody] CouponCreateDto request) =>
 		LastUpdated = DateTime.Now
 	};
 
-	CouponStore.CouponList.Add(coupon);
+	//CouponStore.CouponList.Add(coupon);
+	context.Coupons.Add(coupon);
+	await context.SaveChangesAsync();
 
 	return Results.Created($"/api/coupon/{coupon.Id}", coupon);
 }).WithName("CreateCoupon").Accepts<CouponCreateDto>("application/json").Produces<Coupon>(201).Produces(400);
 
 // GET the list of coupons
-app.MapGet("/api/coupons", (ILogger<Program> logger) =>
+app.MapGet("/api/coupons", async (ILogger<Program> logger, ApplicationDbContext context) =>
 {
-	var result = CouponStore.CouponList;
+	//var result = CouponStore.CouponList;
+	var result = await context.Coupons.ToListAsync();
 
 	logger.LogInformation("List of coupons are ready for the client");
 
@@ -62,7 +69,7 @@ app.MapGet("/api/coupons", (ILogger<Program> logger) =>
 }).WithName("GetCoupons").Produces(200);
 
 // GET coupon by ID
-app.MapGet("/api/coupons/{id:int}", (int id) =>
+app.MapGet("/api/coupons/{id:int}", (Guid id) =>
 {
 	var coupon = CouponStore.CouponList.FirstOrDefault(u => u.Id == id);
 
@@ -95,7 +102,7 @@ app.MapPut("/api/coupons", (CouponUpdateDto request) =>
 }).Produces<BadRequest>(400).Produces<Ok>();
 
 // Delete coupon by id
-app.MapDelete("/api/coupons/{id:int}", (int id) =>
+app.MapDelete("/api/coupons/{id:Guid}", (Guid id) =>
 {
 	var coupon = CouponStore.CouponList.FirstOrDefault(u => u.Id == id);
 
